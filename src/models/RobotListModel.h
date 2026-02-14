@@ -2,7 +2,7 @@
 #define ROBOTLISTMODEL_H
 
 #include <QAbstractListModel>
-#include <QVector>
+#include <QList>
 #include "Robot.h"
 
 class RobotListModel : public QAbstractListModel
@@ -35,7 +35,7 @@ public:
     int count() const { return m_robots.count(); }
 
 private:
-    QVector<Robot> m_robots;
+    QList<Robot> m_robots;
 };
 
 #endif // ROBOTLISTMODEL_H

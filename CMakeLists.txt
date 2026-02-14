@@ -39,8 +39,6 @@ qt_add_qml_module(FalconsDeck
         qml/ScannerView.qml
         qml/RobotDashboard.qml
         qml/RobotCard.qml
-    RESOURCES
-        resources.qrc
 )
 
 target_link_libraries(FalconsDeck PRIVATE

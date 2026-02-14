@@ -2,7 +2,7 @@
 #define BLECONNECTIONMANAGER_H
 
 #include <QObject>
-#include <QVector>
+#include <QList>
 #include <QMap>
 #include <QBluetoothDeviceInfo>
 #include "BleRobotConnection.h"
@@ -51,7 +51,7 @@ private:
     void updateConnectedCount();
     void updateRobotModel(int index);
 
-    QVector<BleRobotConnection*> m_connections;
+    QList<BleRobotConnection*> m_connections;
     RobotListModel *m_robotListModel;
     int m_connectedCount;
     int m_nextRobotId;
