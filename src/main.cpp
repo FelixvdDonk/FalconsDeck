@@ -2,6 +2,7 @@
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QIcon>
+#include <QBluetoothDeviceInfo>
 #include "src/ble/BleDeviceScanner.h"
 #include "src/ble/BleConnectionManager.h"
 
@@ -11,6 +12,9 @@ int main(int argc, char *argv[])
     app.setApplicationName("FalconsDeck");
     app.setOrganizationName("Falcons");
     app.setApplicationVersion("1.0.0");
+
+    // Register metatypes for QML
+    qRegisterMetaType<QBluetoothDeviceInfo>("QBluetoothDeviceInfo");
 
     // Create BLE components
     BleDeviceScanner scanner;

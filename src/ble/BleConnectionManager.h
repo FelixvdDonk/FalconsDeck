@@ -25,12 +25,14 @@ public:
     int connectedCount() const { return m_connectedCount; }
 
 public slots:
-    void connectRobot(const QBluetoothDeviceInfo &device);
-    void disconnectRobot(int index);
-    void disconnectRobotByAddress(const QString &address);
-    void disconnectAll();
-    void sendToRobot(int index, const QByteArray &data);
-    void sendToAll(const QByteArray &data);
+    Q_INVOKABLE void connectRobot(const QBluetoothDeviceInfo &device);
+    Q_INVOKABLE void disconnectRobot(int index);
+    Q_INVOKABLE void disconnectRobotByAddress(const QString &address);
+    Q_INVOKABLE void disconnectAll();
+    Q_INVOKABLE void sendToRobot(int index, const QByteArray &data);
+    Q_INVOKABLE void sendToRobot(int index, const QString &text);
+    Q_INVOKABLE void sendToAll(const QByteArray &data);
+    Q_INVOKABLE void sendToAll(const QString &text);
 
 signals:
     void connectedCountChanged();

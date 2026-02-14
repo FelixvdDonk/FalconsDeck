@@ -102,14 +102,12 @@ Item {
                             Layout.preferredWidth: 120
                             Layout.preferredHeight: 50
                             onClicked: {
-                                // Get the actual device info from scanner
-                                // For now, we'll use the discovery agent's device list
                                 console.log("Connecting to device:", modelData.address)
-                                // This will be handled by passing the device info
-                                Qt.callLater(function() {
-                                    // Find and connect using the discovery agent
+                                var device = bleScanner.getDeviceByAddress(modelData.address)
+                                if (device.address.toString() !== "00:00:00:00:00:00") {
+                                    connectionManager.connectRobot(device)
                                     bleScanner.stopScan()
-                                })
+                                }
                             }
                         }
                     }

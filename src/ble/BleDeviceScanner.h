@@ -23,6 +23,9 @@ public slots:
     void startScan();
     void stopScan();
 
+    Q_INVOKABLE QBluetoothDeviceInfo getDeviceAt(int index) const;
+    Q_INVOKABLE QBluetoothDeviceInfo getDeviceByAddress(const QString &address) const;
+
 signals:
     void scanningChanged();
     void discoveredDevicesChanged();

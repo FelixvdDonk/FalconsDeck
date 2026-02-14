@@ -103,6 +103,11 @@ void BleConnectionManager::sendToRobot(int index, const QByteArray &data)
     m_connections[index]->sendData(data);
 }
 
+void BleConnectionManager::sendToRobot(int index, const QString &text)
+{
+    sendToRobot(index, text.toUtf8());
+}
+
 void BleConnectionManager::sendToAll(const QByteArray &data)
 {
     qDebug() << "Broadcasting data to all robots:" << data.toHex();
@@ -110,6 +115,11 @@ void BleConnectionManager::sendToAll(const QByteArray &data)
     for (BleRobotConnection *connection : m_connections) {
         connection->sendData(data);
     }
+}
+
+void BleConnectionManager::sendToAll(const QString &text)
+{
+    sendToAll(text.toUtf8());
 }
 
 void BleConnectionManager::onConnectionStateChanged()

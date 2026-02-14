@@ -47,11 +47,8 @@ Item {
                         font.pixelSize: 14
                         enabled: dataInput.text.length > 0 && robotGrid.currentIndex >= 0
                         onClicked: {
-                            var data = parseInput(dataInput.text)
-                            if (data.length > 0) {
-                                connectionManager.sendToRobot(robotGrid.currentIndex, data)
-                                console.log("Sent to robot", robotGrid.currentIndex, ":", data.toString('hex'))
-                            }
+                            connectionManager.sendToRobot(robotGrid.currentIndex, dataInput.text)
+                            console.log("Sent to robot", robotGrid.currentIndex)
                         }
                     }
 
@@ -60,11 +57,8 @@ Item {
                         font.pixelSize: 14
                         enabled: dataInput.text.length > 0 && connectionManager.connectedCount > 0
                         onClicked: {
-                            var data = parseInput(dataInput.text)
-                            if (data.length > 0) {
-                                connectionManager.sendToAll(data)
-                                console.log("Broadcast:", data.toString('hex'))
-                            }
+                            connectionManager.sendToAll(dataInput.text)
+                            console.log("Broadcast")
                         }
                     }
                 }
@@ -153,26 +147,6 @@ Item {
                 horizontalAlignment: Text.AlignHCenter
                 visible: robotGrid.count === 0
             }
-        }
-    }
-
-    // Helper function to parse input as hex or text
-    function parseInput(input) {
-        // Remove whitespace
-        var cleaned = input.replace(/\s+/g, '')
-        
-        // Check if it looks like hex (pairs of hex digits)
-        if (/^[0-9a-fA-F]+$/.test(cleaned) && cleaned.length % 2 === 0) {
-            // Parse as hex
-            var bytes = []
-            for (var i = 0; i < cleaned.length; i += 2) {
-                bytes.push(parseInt(cleaned.substr(i, 2), 16))
-            }
-            return bytes
-        } else {
-            // Parse as text (UTF-8)
-            var encoder = new TextEncoder()
-            return Array.from(encoder.encode(input))
         }
     }
 }

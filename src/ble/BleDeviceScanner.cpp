@@ -108,6 +108,24 @@ void BleDeviceScanner::onScanError(QBluetoothDeviceDiscoveryAgent::Error error)
     emit scanError(errorString);
 }
 
+QBluetoothDeviceInfo BleDeviceScanner::getDeviceAt(int index) const
+{
+    if (index >= 0 && index < m_deviceInfoList.size()) {
+        return m_deviceInfoList.at(index);
+    }
+    return QBluetoothDeviceInfo();
+}
+
+QBluetoothDeviceInfo BleDeviceScanner::getDeviceByAddress(const QString &address) const
+{
+    for (const QBluetoothDeviceInfo &device : m_deviceInfoList) {
+        if (device.address().toString() == address) {
+            return device;
+        }
+    }
+    return QBluetoothDeviceInfo();
+}
+
 void BleDeviceScanner::updateDeviceList(const QBluetoothDeviceInfo &device)
 {
     // Check if device already exists (by address)
