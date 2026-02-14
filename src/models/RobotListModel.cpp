@@ -34,6 +34,12 @@ QVariant RobotListModel::data(const QModelIndex &index, int role) const
         return robot.lastPacketTime().toString("hh:mm:ss");
     case IdRole:
         return robot.id();
+    case TotalVoltageRole:
+        return robot.totalVoltage();
+    case CurrentRole:
+        return robot.current();
+    case SocRole:
+        return robot.soc();
     default:
         return QVariant();
     }
@@ -49,6 +55,9 @@ QHash<int, QByteArray> RobotListModel::roleNames() const
     roles[LastDataRole] = "lastData";
     roles[LastDataTimeRole] = "lastDataTime";
     roles[IdRole] = "robotId";
+    roles[TotalVoltageRole] = "totalVoltage";
+    roles[CurrentRole] = "current";
+    roles[SocRole] = "soc";
     return roles;
 }
 

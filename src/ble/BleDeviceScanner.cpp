@@ -2,9 +2,13 @@
 #include <QDebug>
 #include <QVariantMap>
 
+// JBD BMS (Xiaoxiang/SmartBMS) uses the 0xFF00 BLE service with characteristics 0xFF01 (notify) and 0xFF02 (write)
+const QBluetoothUuid BleDeviceScanner::JBD_BMS_SERVICE_UUID = QBluetoothUuid(static_cast<quint16>(0xFF00));
+
 BleDeviceScanner::BleDeviceScanner(QObject *parent)
     : QObject(parent)
     , m_scanning(false)
+    , m_filterEnabled(true)
 {
     m_discoveryAgent = new QBluetoothDeviceDiscoveryAgent(this);
     m_discoveryAgent->setLowEnergyDiscoveryTimeout(5000);
@@ -55,6 +59,29 @@ void BleDeviceScanner::stopScan()
     emit scanningChanged();
 }
 
+void BleDeviceScanner::setFilterEnabled(bool enabled)
+{
+    if (m_filterEnabled == enabled)
+        return;
+
+    m_filterEnabled = enabled;
+    emit filterEnabledChanged();
+    qDebug() << "JBD BMS filter" << (enabled ? "enabled" : "disabled");
+}
+
+bool BleDeviceScanner::isJbdBmsDevice(const QBluetoothDeviceInfo &device) const
+{
+    // Check if the device advertises the JBD BMS service UUID (0xFF00)
+    const QList<QBluetoothUuid> serviceUuids = device.serviceUuids();
+    for (const QBluetoothUuid &uuid : serviceUuids) {
+        if (uuid == JBD_BMS_SERVICE_UUID) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 void BleDeviceScanner::onDeviceDiscovered(const QBluetoothDeviceInfo &device)
 {
     // Only process Low Energy devices
@@ -62,8 +89,14 @@ void BleDeviceScanner::onDeviceDiscovered(const QBluetoothDeviceInfo &device)
         return;
     }
 
-    qDebug() << "Device discovered:" << device.name() << device.address().toString() << "RSSI:" << device.rssi();
-    
+    qDebug() << "Device discovered:" << device.name() << device.address().toString()
+             << "RSSI:" << device.rssi() << "Services:" << device.serviceUuids();
+
+    // Filter for JBD BMS devices if enabled
+    if (m_filterEnabled && !isJbdBmsDevice(device)) {
+        return;
+    }
+
     updateDeviceList(device);
     emit deviceDiscovered(device);
 }

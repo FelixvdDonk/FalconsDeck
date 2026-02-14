@@ -17,7 +17,10 @@ public:
         RssiRole,
         LastDataRole,
         LastDataTimeRole,
-        IdRole
+        IdRole,
+        TotalVoltageRole,
+        CurrentRole,
+        SocRole
     };
 
     explicit RobotListModel(QObject *parent = nullptr);

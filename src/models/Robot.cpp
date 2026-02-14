@@ -4,6 +4,9 @@ Robot::Robot()
     : m_id(0)
     , m_connectionState(Disconnected)
     , m_rssi(-100)
+    , m_totalVoltage(0.0f)
+    , m_current(0.0f)
+    , m_soc(0)
 {
 }
 
@@ -13,6 +16,9 @@ Robot::Robot(int id, const QString &name, const QBluetoothAddress &address)
     , m_bluetoothAddress(address)
     , m_connectionState(Disconnected)
     , m_rssi(-100)
+    , m_totalVoltage(0.0f)
+    , m_current(0.0f)
+    , m_soc(0)
 {
 }
 

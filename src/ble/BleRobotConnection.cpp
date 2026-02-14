@@ -49,6 +49,10 @@ void BleRobotConnection::connectToDevice(const QBluetoothDeviceInfo &device)
     // Create controller
     m_controller = QLowEnergyController::createCentral(device, this);
 
+    // On Linux without CAP_NET_ADMIN, BlueZ can't auto-detect address types.
+    // BLE peripherals typically use random addresses, so set it explicitly.
+    m_controller->setRemoteAddressType(QLowEnergyController::RandomAddress);
+
     connect(m_controller, &QLowEnergyController::connected,
             this, &BleRobotConnection::onControllerConnected);
     connect(m_controller, &QLowEnergyController::disconnected,

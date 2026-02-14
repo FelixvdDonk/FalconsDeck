@@ -7,18 +7,20 @@ Item {
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: 10
-        spacing: 10
+        anchors.margins: 16
+        spacing: 12
 
+        // Top bar: scan controls
         RowLayout {
             Layout.fillWidth: true
-            spacing: 10
+            spacing: 12
 
             Button {
-                text: bleScanner.scanning ? "Stop Scan" : "Start Scan"
-                font.pixelSize: 18
-                Layout.preferredHeight: 60
-                Layout.preferredWidth: 200
+                text: bleScanner.scanning ? "⏹ Stop Scan" : "▶ Start Scan"
+                font.pixelSize: 16
+                font.bold: true
+                Layout.preferredHeight: 48
+                Layout.preferredWidth: 180
                 onClicked: {
                     if (bleScanner.scanning) {
                         bleScanner.stopScan()
@@ -26,88 +28,148 @@ Item {
                         bleScanner.startScan()
                     }
                 }
+                contentItem: Label {
+                    text: parent.text
+                    font: parent.font
+                    color: "white"
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                }
+                background: Rectangle {
+                    color: bleScanner.scanning ? "#c62828" : "#2e7d32"
+                    radius: 8
+                    opacity: parent.hovered ? 0.85 : 1.0
+                }
+            }
+
+            CheckBox {
+                id: filterCheckbox
+                text: "SmartBMS only"
+                checked: bleScanner.filterEnabled
+                font.pixelSize: 14
+                onCheckedChanged: bleScanner.filterEnabled = checked
+                contentItem: Label {
+                    text: filterCheckbox.text
+                    font: filterCheckbox.font
+                    color: "#cccccc"
+                    leftPadding: filterCheckbox.indicator.width + filterCheckbox.spacing
+                    verticalAlignment: Text.AlignVCenter
+                }
+            }
+
+            Item { Layout.fillWidth: true }
+
+            BusyIndicator {
+                running: bleScanner.scanning
+                Layout.preferredWidth: 32
+                Layout.preferredHeight: 32
+                visible: bleScanner.scanning
             }
 
             Label {
-                text: bleScanner.scanning ? "Scanning..." : "Ready"
-                font.pixelSize: 16
-                Layout.fillWidth: true
-            }
-
-            Label {
-                text: "Found: " + deviceListView.count + " devices"
-                font.pixelSize: 16
+                text: deviceListView.count + " devices found"
+                font.pixelSize: 14
+                color: "#aaaaaa"
             }
         }
 
+        // Device list
         Rectangle {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            color: "#2a2a2a"
-            border.color: "#444444"
-            border.width: 2
-            radius: 5
+            color: "#1a1a1a"
+            border.color: "#333333"
+            border.width: 1
+            radius: 8
 
             ListView {
                 id: deviceListView
                 anchors.fill: parent
-                anchors.margins: 5
+                anchors.margins: 8
                 clip: true
-                spacing: 5
+                spacing: 6
 
                 model: bleScanner.discoveredDevices
 
                 delegate: Rectangle {
-                    width: deviceListView.width - 10
-                    height: 80
-                    color: "#3a3a3a"
-                    border.color: "#555555"
+                    width: deviceListView.width
+                    height: 72
+                    color: mouseArea.containsMouse ? "#333333" : "#252525"
+                    border.color: "#444444"
                     border.width: 1
-                    radius: 5
+                    radius: 8
+
+                    MouseArea {
+                        id: mouseArea
+                        anchors.fill: parent
+                        hoverEnabled: true
+                    }
 
                     RowLayout {
                         anchors.fill: parent
-                        anchors.margins: 10
-                        spacing: 15
+                        anchors.leftMargin: 16
+                        anchors.rightMargin: 12
+                        spacing: 16
+
+                        // Signal strength indicator
+                        Rectangle {
+                            Layout.preferredWidth: 48
+                            Layout.preferredHeight: 48
+                            radius: 24
+                            color: modelData.rssi > -70 ? "#1b5e20" :
+                                   modelData.rssi > -85 ? "#e65100" : "#b71c1c"
+
+                            Label {
+                                anchors.centerIn: parent
+                                text: modelData.rssi
+                                font.pixelSize: 12
+                                font.bold: true
+                                color: "white"
+                            }
+                        }
 
                         ColumnLayout {
                             Layout.fillWidth: true
-                            spacing: 5
+                            spacing: 2
 
                             Label {
-                                text: modelData.name
-                                font.pixelSize: 18
+                                text: modelData.name || "Unknown"
+                                font.pixelSize: 16
                                 font.bold: true
                                 color: "white"
                                 Layout.fillWidth: true
+                                elide: Text.ElideRight
                             }
 
                             Label {
-                                text: "Address: " + modelData.address
-                                font.pixelSize: 14
-                                color: "#cccccc"
-                            }
-
-                            Label {
-                                text: "RSSI: " + modelData.rssi + " dBm"
-                                font.pixelSize: 14
-                                color: modelData.rssi > -70 ? "#00ff00" : 
-                                      modelData.rssi > -85 ? "#ffaa00" : "#ff0000"
+                                text: modelData.address
+                                font.pixelSize: 12
+                                color: "#999999"
+                                font.family: "monospace"
                             }
                         }
 
                         Button {
                             text: "Connect"
-                            font.pixelSize: 16
-                            Layout.preferredWidth: 120
-                            Layout.preferredHeight: 50
+                            font.pixelSize: 14
+                            Layout.preferredWidth: 110
+                            Layout.preferredHeight: 40
+                            contentItem: Label {
+                                text: parent.text
+                                font: parent.font
+                                color: "white"
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
+                            }
+                            background: Rectangle {
+                                color: parent.hovered ? "#1565c0" : "#1976d2"
+                                radius: 6
+                            }
                             onClicked: {
                                 console.log("Connecting to device:", modelData.address)
                                 var device = bleScanner.getDeviceByAddress(modelData.address)
-                                if (device.address.toString() !== "00:00:00:00:00:00") {
-                                    connectionManager.connectRobot(device)
-                                    bleScanner.stopScan()
-                                }
+                                connectionManager.connectRobot(device)
+                                bleScanner.stopScan()
                             }
                         }
                     }
@@ -118,20 +180,33 @@ Item {
                 }
             }
 
-            Label {
+            // Empty state
+            ColumnLayout {
                 anchors.centerIn: parent
-                text: "No devices found.\nPress 'Start Scan' to discover BLE devices."
-                font.pixelSize: 16
-                color: "#888888"
-                horizontalAlignment: Text.AlignHCenter
+                spacing: 12
                 visible: deviceListView.count === 0 && !bleScanner.scanning
-            }
 
-            BusyIndicator {
-                anchors.centerIn: parent
-                running: bleScanner.scanning && deviceListView.count === 0
-                width: 100
-                height: 100
+                Label {
+                    text: "📡"
+                    font.pixelSize: 48
+                    Layout.alignment: Qt.AlignHCenter
+                }
+
+                Label {
+                    text: bleScanner.filterEnabled
+                        ? "No SmartBMS devices found"
+                        : "No devices found"
+                    font.pixelSize: 18
+                    color: "#888888"
+                    Layout.alignment: Qt.AlignHCenter
+                }
+
+                Label {
+                    text: "Press 'Start Scan' to search for BLE devices"
+                    font.pixelSize: 14
+                    color: "#666666"
+                    Layout.alignment: Qt.AlignHCenter
+                }
             }
         }
     }

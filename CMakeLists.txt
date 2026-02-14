@@ -19,6 +19,8 @@ set(PROJECT_SOURCES
     src/ble/BleRobotConnection.cpp
     src/ble/BleConnectionManager.h
     src/ble/BleConnectionManager.cpp
+    src/ble/JbdBmsConnection.h
+    src/ble/JbdBmsConnection.cpp
     src/models/Robot.h
     src/models/Robot.cpp
     src/models/RobotListModel.h
@@ -27,11 +29,11 @@ set(PROJECT_SOURCES
     src/protocol/PacketInterface.cpp
 )
 
-qt_add_executable(FalconsDeck
+qt_add_executable(FalconsDeckApp
     ${PROJECT_SOURCES}
 )
 
-qt_add_qml_module(FalconsDeck
+qt_add_qml_module(FalconsDeckApp
     URI FalconsDeck
     VERSION 1.0
     QML_FILES
@@ -41,13 +43,13 @@ qt_add_qml_module(FalconsDeck
         qml/RobotCard.qml
 )
 
-target_link_libraries(FalconsDeck PRIVATE
+target_link_libraries(FalconsDeckApp PRIVATE
     Qt6::Core
     Qt6::Quick
     Qt6::Bluetooth
 )
 
-set_target_properties(FalconsDeck PROPERTIES
+set_target_properties(FalconsDeckApp PROPERTIES
     MACOSX_BUNDLE_GUI_IDENTIFIER com.falcons.falconsdeck
     MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
     MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
@@ -55,7 +57,7 @@ set_target_properties(FalconsDeck PROPERTIES
     WIN32_EXECUTABLE TRUE
 )
 
-install(TARGETS FalconsDeck
+install(TARGETS FalconsDeckApp
     BUNDLE DESTINATION .
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}

@@ -42,6 +42,15 @@ public:
     QDateTime lastPacketTime() const { return m_lastPacketTime; }
     void setLastPacketTime(const QDateTime &time) { m_lastPacketTime = time; }
 
+    float totalVoltage() const { return m_totalVoltage; }
+    void setTotalVoltage(float voltage) { m_totalVoltage = voltage; }
+
+    float current() const { return m_current; }
+    void setCurrent(float current) { m_current = current; }
+
+    int soc() const { return m_soc; }
+    void setSoc(int soc) { m_soc = soc; }
+
     static QString connectionStateToString(ConnectionState state);
 
 private:
@@ -52,6 +61,9 @@ private:
     int m_rssi;
     QByteArray m_lastPacketReceived;
     QDateTime m_lastPacketTime;
+    float m_totalVoltage;
+    float m_current;
+    int m_soc;
 };
 
 Q_DECLARE_METATYPE(Robot::ConnectionState)

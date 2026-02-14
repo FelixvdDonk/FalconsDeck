@@ -7,90 +7,71 @@ Item {
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: 10
-        spacing: 10
+        anchors.margins: 16
+        spacing: 12
 
-        // Control panel
-        Rectangle {
+        // ── Header bar ──
+        RowLayout {
             Layout.fillWidth: true
-            Layout.preferredHeight: 100
-            color: "#2a2a2a"
-            border.color: "#444444"
-            border.width: 2
-            radius: 5
+            spacing: 12
 
-            ColumnLayout {
-                anchors.fill: parent
-                anchors.margins: 10
-                spacing: 10
+            Label {
+                text: "🔋 Connected Devices"
+                font.pixelSize: 20
+                font.bold: true
+                color: "white"
+            }
 
-                Label {
-                    text: "Send Data to Robots"
-                    font.pixelSize: 16
-                    font.bold: true
+            Item { Layout.fillWidth: true }
+
+            Label {
+                text: connectionManager.connectedCount + " active"
+                font.pixelSize: 14
+                color: connectionManager.connectedCount > 0 ? "#4caf50" : "#888888"
+            }
+
+            Button {
+                text: "Disconnect All"
+                font.pixelSize: 13
+                visible: connectionManager.connectedCount > 0
+                contentItem: Label {
+                    text: parent.text
+                    font: parent.font
                     color: "white"
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
                 }
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 10
-
-                    TextField {
-                        id: dataInput
-                        Layout.fillWidth: true
-                        placeholderText: "Enter hex data (e.g., 01 02 03 04) or text"
-                        font.pixelSize: 14
-                    }
-
-                    Button {
-                        text: "Send to Selected"
-                        font.pixelSize: 14
-                        enabled: dataInput.text.length > 0 && robotGrid.currentIndex >= 0
-                        onClicked: {
-                            connectionManager.sendToRobot(robotGrid.currentIndex, dataInput.text)
-                            console.log("Sent to robot", robotGrid.currentIndex)
-                        }
-                    }
-
-                    Button {
-                        text: "Send to All"
-                        font.pixelSize: 14
-                        enabled: dataInput.text.length > 0 && connectionManager.connectedCount > 0
-                        onClicked: {
-                            connectionManager.sendToAll(dataInput.text)
-                            console.log("Broadcast")
-                        }
-                    }
+                background: Rectangle {
+                    color: parent.hovered ? "#c62828" : "#b71c1c"
+                    radius: 6
+                    opacity: parent.hovered ? 1.0 : 0.85
                 }
+                onClicked: connectionManager.disconnectAll()
             }
         }
 
-        // Robot grid (4x4 layout for 16 robots)
+        // ── Device cards grid ──
         Rectangle {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            color: "#1a1a1a"
-            border.color: "#444444"
-            border.width: 2
-            radius: 5
+            color: "transparent"
 
             GridView {
-                id: robotGrid
+                id: deviceGrid
                 anchors.fill: parent
-                anchors.margins: 10
-                cellWidth: width / 4
-                cellHeight: height / 4
                 clip: true
+                cellWidth: Math.max(280, width / Math.max(1, Math.floor(width / 320)))
+                cellHeight: 340
 
                 model: connectionManager.robotListModel
 
                 delegate: Item {
-                    width: robotGrid.cellWidth
-                    height: robotGrid.cellHeight
+                    width: deviceGrid.cellWidth
+                    height: deviceGrid.cellHeight
 
                     RobotCard {
                         anchors.fill: parent
-                        anchors.margins: 5
+                        anchors.margins: 6
                         robotName: model.name
                         robotAddress: model.address
                         connectionState: model.connectionState
@@ -98,16 +79,9 @@ Item {
                         lastData: model.lastData
                         lastDataTime: model.lastDataTime
                         robotIndex: index
-
-                        MouseArea {
-                            anchors.fill: parent
-                            onClicked: {
-                                robotGrid.currentIndex = index
-                            }
-                        }
-
-                        // Highlight selected robot
-                        border.width: robotGrid.currentIndex === index ? 4 : 2
+                        totalVoltage: model.totalVoltage
+                        current: model.current
+                        soc: model.soc
 
                         onDisconnectClicked: {
                             connectionManager.disconnectRobot(index)
@@ -115,37 +89,36 @@ Item {
                     }
                 }
 
-                // Show placeholder for empty slots
-                Repeater {
-                    model: 16 - robotGrid.count
-                    
-                    Rectangle {
-                        x: (robotGrid.count + index) % 4 * robotGrid.cellWidth + 5
-                        y: Math.floor((robotGrid.count + index) / 4) * robotGrid.cellHeight + 5
-                        width: robotGrid.cellWidth - 10
-                        height: robotGrid.cellHeight - 10
-                        color: "#2a2a2a"
-                        border.color: "#333333"
-                        border.width: 1
-                        radius: 8
-
-                        Label {
-                            anchors.centerIn: parent
-                            text: "Slot " + (robotGrid.count + index + 1)
-                            font.pixelSize: 14
-                            color: "#666666"
-                        }
-                    }
+                ScrollBar.vertical: ScrollBar {
+                    policy: ScrollBar.AsNeeded
                 }
             }
 
-            Label {
+            // ── Empty state ──
+            ColumnLayout {
                 anchors.centerIn: parent
-                text: "No robots connected.\nUse the Scanner to connect to robots."
-                font.pixelSize: 16
-                color: "#888888"
-                horizontalAlignment: Text.AlignHCenter
-                visible: robotGrid.count === 0
+                spacing: 16
+                visible: deviceGrid.count === 0
+
+                Label {
+                    text: "🔌"
+                    font.pixelSize: 64
+                    Layout.alignment: Qt.AlignHCenter
+                }
+
+                Label {
+                    text: "No devices connected"
+                    font.pixelSize: 20
+                    color: "#888888"
+                    Layout.alignment: Qt.AlignHCenter
+                }
+
+                Label {
+                    text: "Go to the Scanner tab to find and connect to BMS devices"
+                    font.pixelSize: 14
+                    color: "#666666"
+                    Layout.alignment: Qt.AlignHCenter
+                }
             }
         }
     }

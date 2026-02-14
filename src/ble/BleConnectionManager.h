@@ -6,6 +6,7 @@
 #include <QMap>
 #include <QBluetoothDeviceInfo>
 #include "BleRobotConnection.h"
+#include "JbdBmsConnection.h"
 #include "src/models/RobotListModel.h"
 #include "src/models/Robot.h"
 
@@ -44,14 +45,20 @@ private slots:
     void onConnectionStateChanged();
     void onDataReceived(const QByteArray &data);
     void onErrorOccurred(const QString &error);
+    void onJbdConnectionStateChanged();
+    void onJbdBmsDataUpdated();
+    void onJbdErrorOccurred(const QString &error);
 
 private:
     int findConnectionIndex(BleRobotConnection *connection);
     int findConnectionByAddress(const QString &address);
+    int findJbdConnectionIndex(JbdBmsConnection *connection);
     void updateConnectedCount();
     void updateRobotModel(int index);
+    void updateJbdRobotModel(int index);
 
     QList<BleRobotConnection*> m_connections;
+    QList<JbdBmsConnection*> m_jbdConnections;
     RobotListModel *m_robotListModel;
     int m_connectedCount;
     int m_nextRobotId;
