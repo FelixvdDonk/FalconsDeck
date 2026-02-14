@@ -10,37 +10,10 @@ Item {
         anchors.margins: 16
         spacing: 12
 
-        // Top bar: scan controls
+        // Top bar: filter controls
         RowLayout {
             Layout.fillWidth: true
             spacing: 12
-
-            Button {
-                text: bleScanner.scanning ? "⏹ Stop Scan" : "▶ Start Scan"
-                font.pixelSize: 16
-                font.bold: true
-                Layout.preferredHeight: 48
-                Layout.preferredWidth: 180
-                onClicked: {
-                    if (bleScanner.scanning) {
-                        bleScanner.stopScan()
-                    } else {
-                        bleScanner.startScan()
-                    }
-                }
-                contentItem: Label {
-                    text: parent.text
-                    font: parent.font
-                    color: "white"
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
-                }
-                background: Rectangle {
-                    color: bleScanner.scanning ? "#c62828" : "#2e7d32"
-                    radius: 8
-                    opacity: parent.hovered ? 0.85 : 1.0
-                }
-            }
 
             CheckBox {
                 id: filterCheckbox
@@ -58,13 +31,6 @@ Item {
             }
 
             Item { Layout.fillWidth: true }
-
-            BusyIndicator {
-                running: bleScanner.scanning
-                Layout.preferredWidth: 32
-                Layout.preferredHeight: 32
-                visible: bleScanner.scanning
-            }
 
             Label {
                 text: deviceListView.count + " devices found"
@@ -169,7 +135,6 @@ Item {
                                 console.log("Connecting to device:", modelData.address)
                                 var device = bleScanner.getDeviceByAddress(modelData.address)
                                 connectionManager.connectRobot(device)
-                                bleScanner.stopScan()
                             }
                         }
                     }
@@ -184,7 +149,7 @@ Item {
             ColumnLayout {
                 anchors.centerIn: parent
                 spacing: 12
-                visible: deviceListView.count === 0 && !bleScanner.scanning
+                visible: deviceListView.count === 0
 
                 Label {
                     text: "📡"
@@ -202,7 +167,7 @@ Item {
                 }
 
                 Label {
-                    text: "Press 'Start Scan' to search for BLE devices"
+                    text: "Scanning for nearby BLE devices…"
                     font.pixelSize: 14
                     color: "#666666"
                     Layout.alignment: Qt.AlignHCenter

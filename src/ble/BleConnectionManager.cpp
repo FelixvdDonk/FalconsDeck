@@ -4,6 +4,7 @@
 
 BleConnectionManager::BleConnectionManager(QObject *parent)
     : QObject(parent)
+    , m_scanner(nullptr)
     , m_connectedCount(0)
     , m_nextRobotId(1)
 {
@@ -53,6 +54,12 @@ void BleConnectionManager::connectRobot(const QBluetoothDeviceInfo &device)
 
     if (isJbdDevice) {
         qDebug() << "Detected JBD BMS device, using JbdBmsConnection";
+
+        // Pause scanning during connection to avoid BlueZ HCI contention
+        if (m_scanner && m_scanner->isScanning()) {
+            m_scanner->stopScan();
+        }
+
         JbdBmsConnection *connection = new JbdBmsConnection(this);
 
         connect(connection, &JbdBmsConnection::connectionStateChanged,
@@ -66,6 +73,12 @@ void BleConnectionManager::connectRobot(const QBluetoothDeviceInfo &device)
         connection->connectToDevice(device);
     } else {
         qDebug() << "Using NUS BleRobotConnection";
+
+        // Pause scanning during connection to avoid BlueZ HCI contention
+        if (m_scanner && m_scanner->isScanning()) {
+            m_scanner->stopScan();
+        }
+
         BleRobotConnection *connection = new BleRobotConnection(this);
 
         connect(connection, &BleRobotConnection::connectionStateChanged,
@@ -197,6 +210,15 @@ void BleConnectionManager::onConnectionStateChanged()
     if (connection->connectionState() == Robot::Ready) {
         emit robotConnected(index);
     }
+
+    // Resume scanning once connection has settled
+    if (connection->connectionState() == Robot::Ready ||
+        connection->connectionState() == Robot::Error ||
+        connection->connectionState() == Robot::Disconnected) {
+        if (m_scanner && !m_scanner->isScanning()) {
+            m_scanner->startScan();
+        }
+    }
 }
 
 void BleConnectionManager::onDataReceived(const QByteArray &data)
@@ -257,6 +279,15 @@ void BleConnectionManager::onJbdConnectionStateChanged()
 
     if (connection->connectionState() == Robot::Ready) {
         emit robotConnected(index);
+    }
+
+    // Resume scanning once connection has settled
+    if (connection->connectionState() == Robot::Ready ||
+        connection->connectionState() == Robot::Error ||
+        connection->connectionState() == Robot::Disconnected) {
+        if (m_scanner && !m_scanner->isScanning()) {
+            m_scanner->startScan();
+        }
     }
 }
 

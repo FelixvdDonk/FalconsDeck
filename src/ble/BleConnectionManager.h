@@ -10,6 +10,8 @@
 #include "src/models/RobotListModel.h"
 #include "src/models/Robot.h"
 
+class BleDeviceScanner;
+
 class BleConnectionManager : public QObject
 {
     Q_OBJECT
@@ -21,6 +23,8 @@ public:
 
     explicit BleConnectionManager(QObject *parent = nullptr);
     ~BleConnectionManager();
+
+    void setScanner(BleDeviceScanner *scanner) { m_scanner = scanner; }
 
     RobotListModel* robotListModel() { return m_robotListModel; }
     int connectedCount() const { return m_connectedCount; }
@@ -60,6 +64,7 @@ private:
     QList<BleRobotConnection*> m_connections;
     QList<JbdBmsConnection*> m_jbdConnections;
     RobotListModel *m_robotListModel;
+    BleDeviceScanner *m_scanner;
     int m_connectedCount;
     int m_nextRobotId;
 };

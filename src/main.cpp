@@ -19,6 +19,7 @@ int main(int argc, char *argv[])
     // Create BLE components
     BleDeviceScanner scanner;
     BleConnectionManager connectionManager;
+    connectionManager.setScanner(&scanner);
 
     QQmlApplicationEngine engine;
 
@@ -35,6 +36,9 @@ int main(int argc, char *argv[])
     }, Qt::QueuedConnection);
 
     engine.load(url);
+
+    // Auto-start BLE scanning
+    scanner.startScan();
 
     return app.exec();
 }

@@ -61,7 +61,7 @@ Item {
                 anchors.fill: parent
                 clip: true
                 cellWidth: Math.max(300, width / Math.max(1, Math.floor(width / 340)))
-                cellHeight: 480
+                cellHeight: 420
 
                 model: connectionManager.robotListModel
 

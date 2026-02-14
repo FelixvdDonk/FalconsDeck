@@ -11,7 +11,7 @@ BleDeviceScanner::BleDeviceScanner(QObject *parent)
     , m_filterEnabled(true)
 {
     m_discoveryAgent = new QBluetoothDeviceDiscoveryAgent(this);
-    m_discoveryAgent->setLowEnergyDiscoveryTimeout(5000);
+    m_discoveryAgent->setLowEnergyDiscoveryTimeout(0);
 
     connect(m_discoveryAgent, &QBluetoothDeviceDiscoveryAgent::deviceDiscovered,
             this, &BleDeviceScanner::onDeviceDiscovered);
@@ -31,14 +31,10 @@ BleDeviceScanner::~BleDeviceScanner()
 void BleDeviceScanner::startScan()
 {
     if (m_scanning) {
-        qDebug() << "Already scanning";
         return;
     }
 
     qDebug() << "Starting BLE scan...";
-    m_discoveredDevices.clear();
-    m_deviceInfoList.clear();
-    emit discoveredDevicesChanged();
 
     m_scanning = true;
     emit scanningChanged();
@@ -89,13 +85,13 @@ void BleDeviceScanner::onDeviceDiscovered(const QBluetoothDeviceInfo &device)
         return;
     }
 
-    qDebug() << "Device discovered:" << device.name() << device.address().toString()
-             << "RSSI:" << device.rssi() << "Services:" << device.serviceUuids();
-
     // Filter for JBD BMS devices if enabled
     if (m_filterEnabled && !isJbdBmsDevice(device)) {
         return;
     }
+
+    qDebug() << "Device discovered:" << device.name() << device.address().toString()
+             << "RSSI:" << device.rssi();
 
     updateDeviceList(device);
     emit deviceDiscovered(device);
