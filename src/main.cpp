@@ -3,11 +3,19 @@
 #include <QQmlContext>
 #include <QIcon>
 #include <QBluetoothDeviceInfo>
+#include <QQuickWindow>
 #include "src/ble/BleDeviceScanner.h"
 #include "src/ble/BleConnectionManager.h"
 
 int main(int argc, char *argv[])
 {
+    // Reduce input latency: use threaded render loop so input is processed
+    // on the main thread independently of the render thread's vsync wait.
+    qputenv("QSG_RENDER_LOOP", "threaded");
+
+    // Minimize idle-to-render delay
+    qputenv("QT_QPA_UPDATE_IDLE_TIME", "0");
+
     QGuiApplication app(argc, argv);
     app.setApplicationName("FalconsDeck");
     app.setOrganizationName("Falcons");
