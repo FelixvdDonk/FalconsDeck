@@ -276,6 +276,7 @@ void BleConnectionManager::onJbdBmsDataUpdated()
     robot.setTotalVoltage(connection->totalVoltage());
     robot.setCurrent(connection->current());
     robot.setSoc(connection->soc());
+    robot.setCellVoltages(connection->cellVoltages());
     robot.setLastPacketTime(QDateTime::currentDateTime());
     m_robotListModel->updateRobot(index, robot);
 }

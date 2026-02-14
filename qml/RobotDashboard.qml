@@ -60,8 +60,8 @@ Item {
                 id: deviceGrid
                 anchors.fill: parent
                 clip: true
-                cellWidth: Math.max(280, width / Math.max(1, Math.floor(width / 320)))
-                cellHeight: 340
+                cellWidth: Math.max(300, width / Math.max(1, Math.floor(width / 340)))
+                cellHeight: 480
 
                 model: connectionManager.robotListModel
 
@@ -82,6 +82,7 @@ Item {
                         totalVoltage: model.totalVoltage
                         current: model.current
                         soc: model.soc
+                        cellVoltages: model.cellVoltages !== undefined ? model.cellVoltages : []
 
                         onDisconnectClicked: {
                             connectionManager.disconnectRobot(index)

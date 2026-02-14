@@ -20,7 +20,8 @@ public:
         IdRole,
         TotalVoltageRole,
         CurrentRole,
-        SocRole
+        SocRole,
+        CellVoltagesRole
     };
 
     explicit RobotListModel(QObject *parent = nullptr);

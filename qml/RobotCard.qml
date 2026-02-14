@@ -15,6 +15,7 @@ Rectangle {
     property real totalVoltage: 0.0
     property real current: 0.0
     property int soc: 0
+    property var cellVoltages: []
 
     signal disconnectClicked()
 
@@ -163,6 +164,75 @@ Rectangle {
                     font.bold: true
                     color: current > 0.1 ? "#4caf50" :
                            current < -0.1 ? "#f44336" : "#888888"
+                }
+            }
+
+            // ── Cell Voltages ──
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: 4
+                visible: root.cellVoltages.length > 0
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    height: 1
+                    color: "#333333"
+                }
+
+                Label {
+                    text: "Cell Voltages"
+                    font.pixelSize: 12
+                    color: "#aaaaaa"
+                }
+
+                Repeater {
+                    model: root.cellVoltages.length
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 8
+
+                        required property int index
+
+                        Label {
+                            text: "C" + (index + 1)
+                            font.pixelSize: 11
+                            color: "#888888"
+                            Layout.preferredWidth: 24
+                        }
+
+                        Rectangle {
+                            Layout.fillWidth: true
+                            height: 14
+                            radius: 3
+                            color: "#252525"
+
+                            Rectangle {
+                                // Map voltage to bar width: 2.5V=0%, 4.2V=100% (typical Li-ion)
+                                property real cellV: root.cellVoltages[index] || 0
+                                property real pct: Math.max(0, Math.min(100, (cellV - 2.5) / 1.7 * 100))
+                                width: parent.width * pct / 100
+                                height: parent.height
+                                radius: 3
+                                color: pct > 60 ? "#4caf50" :
+                                       pct > 25 ? "#ff9800" : "#f44336"
+
+                                Behavior on width {
+                                    NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
+                                }
+                            }
+                        }
+
+                        Label {
+                            text: (root.cellVoltages[index] || 0).toFixed(3) + "V"
+                            font.pixelSize: 11
+                            font.family: "monospace"
+                            font.bold: true
+                            color: "#cccccc"
+                            Layout.preferredWidth: 54
+                            horizontalAlignment: Text.AlignRight
+                        }
+                    }
                 }
             }
         }

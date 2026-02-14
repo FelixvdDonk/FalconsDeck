@@ -20,6 +20,7 @@ class JbdBmsConnection : public QObject
     Q_PROPERTY(float totalVoltage READ totalVoltage NOTIFY totalVoltageChanged)
     Q_PROPERTY(float current READ current NOTIFY currentChanged)
     Q_PROPERTY(int soc READ soc NOTIFY socChanged)
+    Q_PROPERTY(QList<float> cellVoltages READ cellVoltages NOTIFY cellVoltagesChanged)
 
 public:
     // JBD BMS BLE UUIDs
@@ -45,6 +46,7 @@ public:
     float totalVoltage() const { return m_totalVoltage; }
     float current() const { return m_current; }
     int soc() const { return m_soc; }
+    QList<float> cellVoltages() const { return m_cellVoltages; }
 
     QBluetoothAddress bleAddress() const { return m_deviceAddress; }
 
@@ -61,6 +63,7 @@ signals:
     void totalVoltageChanged();
     void currentChanged();
     void socChanged();
+    void cellVoltagesChanged();
     void bmsDataUpdated();
 
 private slots:
@@ -79,6 +82,7 @@ private:
     void setupService();
     bool sendCommand(uint8_t command);
     void parseHardwareInfo(const QByteArray &data);
+    void parseCellInfo(const QByteArray &data);
     static uint16_t jbdChecksum(const uint8_t *data, uint16_t len);
 
     QLowEnergyController *m_controller;
@@ -99,6 +103,7 @@ private:
     float m_totalVoltage;
     float m_current;
     int m_soc;
+    QList<float> m_cellVoltages;
 };
 
 #endif // JDBBMSCONNECTION_H

@@ -268,7 +268,7 @@ void JbdBmsConnection::onCharacteristicChanged(const QLowEnergyCharacteristic &c
             parseHardwareInfo(payload);
             break;
         case JBD_CMD_CELLINFO:
-            qDebug() << "JbdBmsConnection: Cell info frame received (" << dataLen << "bytes)";
+            parseCellInfo(payload);
             break;
         default:
             qDebug() << "JbdBmsConnection: Unhandled command:" << Qt::hex << command;
@@ -348,6 +348,48 @@ void JbdBmsConnection::requestBmsData()
 
     // Request hardware info (contains total voltage, current, SoC)
     sendCommand(JBD_CMD_HWINFO);
+
+    // Request cell voltage info
+    QTimer::singleShot(200, this, [this]() {
+        if (m_connectionState == Robot::Ready) {
+            sendCommand(JBD_CMD_CELLINFO);
+        }
+    });
+}
+
+void JbdBmsConnection::parseCellInfo(const QByteArray &data)
+{
+    // JBD cell info frame (command 0x04) layout:
+    // Each cell is a uint16 (big-endian), value * 0.001 = volts
+    // Number of cells = data length / 2
+
+    if (data.size() < 2 || data.size() % 2 != 0) {
+        qWarning() << "JbdBmsConnection: Invalid cell info frame size:" << data.size();
+        return;
+    }
+
+    int cellCount = data.size() / 2;
+    QList<float> newCellVoltages;
+    newCellVoltages.reserve(cellCount);
+
+    for (int i = 0; i < cellCount; ++i) {
+        uint16_t raw = (static_cast<uint8_t>(data[i * 2]) << 8) |
+                        static_cast<uint8_t>(data[i * 2 + 1]);
+        float voltage = raw * 0.001f;
+        newCellVoltages.append(voltage);
+    }
+
+    if (m_cellVoltages != newCellVoltages) {
+        m_cellVoltages = newCellVoltages;
+        emit cellVoltagesChanged();
+        emit bmsDataUpdated();
+    }
+
+    QStringList cellStrings;
+    for (float v : m_cellVoltages) {
+        cellStrings.append(QString::number(v, 'f', 3));
+    }
+    qDebug() << "JbdBmsConnection:" << m_deviceName << "- Cell voltages:" << cellStrings.join(", ") << "V";
 }
 
 bool JbdBmsConnection::sendCommand(uint8_t command)

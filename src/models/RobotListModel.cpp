@@ -40,6 +40,13 @@ QVariant RobotListModel::data(const QModelIndex &index, int role) const
         return robot.current();
     case SocRole:
         return robot.soc();
+    case CellVoltagesRole: {
+        QVariantList list;
+        for (float v : robot.cellVoltages()) {
+            list.append(v);
+        }
+        return list;
+    }
     default:
         return QVariant();
     }
@@ -58,6 +65,7 @@ QHash<int, QByteArray> RobotListModel::roleNames() const
     roles[TotalVoltageRole] = "totalVoltage";
     roles[CurrentRole] = "current";
     roles[SocRole] = "soc";
+    roles[CellVoltagesRole] = "cellVoltages";
     return roles;
 }
 

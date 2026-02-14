@@ -51,6 +51,9 @@ public:
     int soc() const { return m_soc; }
     void setSoc(int soc) { m_soc = soc; }
 
+    QList<float> cellVoltages() const { return m_cellVoltages; }
+    void setCellVoltages(const QList<float> &voltages) { m_cellVoltages = voltages; }
+
     static QString connectionStateToString(ConnectionState state);
 
 private:
@@ -64,6 +67,7 @@ private:
     float m_totalVoltage;
     float m_current;
     int m_soc;
+    QList<float> m_cellVoltages;
 };
 
 Q_DECLARE_METATYPE(Robot::ConnectionState)
