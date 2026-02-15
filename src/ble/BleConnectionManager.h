@@ -7,6 +7,7 @@
 #include <QBluetoothDeviceInfo>
 #include "BleRobotConnection.h"
 #include "JbdBmsConnection.h"
+#include "FalconsRobotConnection.h"
 #include "src/models/RobotListModel.h"
 #include "src/models/Robot.h"
 
@@ -39,6 +40,18 @@ public slots:
     Q_INVOKABLE void sendToAll(const QByteArray &data);
     Q_INVOKABLE void sendToAll(const QString &text);
 
+    /** Write play state to a specific robot (Falcons robots only) */
+    Q_INVOKABLE void writePlayState(int index, int state);
+
+    /** Write play state to all connected Falcons robots */
+    Q_INVOKABLE void writePlayStateAll(int state);
+
+    /** Write WiFi SSID to a specific robot (Falcons robots only) */
+    Q_INVOKABLE void writeWifiSsid(int index, const QString &ssid);
+
+    /** Write WiFi SSID to all connected Falcons robots */
+    Q_INVOKABLE void writeWifiSsidAll(const QString &ssid);
+
 signals:
     void connectedCountChanged();
     void robotConnected(int index);
@@ -52,17 +65,22 @@ private slots:
     void onJbdConnectionStateChanged();
     void onJbdBmsDataUpdated();
     void onJbdErrorOccurred(const QString &error);
+    void onFalconsConnectionStateChanged();
+    void onFalconsRobotDataUpdated();
+    void onFalconsErrorOccurred(const QString &error);
 
 private:
     int findConnectionIndex(BleRobotConnection *connection);
     int findConnectionByAddress(const QString &address);
     int findJbdConnectionIndex(JbdBmsConnection *connection);
+    int findFalconsConnectionIndex(FalconsRobotConnection *connection);
     void updateConnectedCount();
     void updateRobotModel(int index);
     void updateJbdRobotModel(int index);
 
     QList<BleRobotConnection*> m_connections;
     QList<JbdBmsConnection*> m_jbdConnections;
+    QList<FalconsRobotConnection*> m_falconsConnections;
     RobotListModel *m_robotListModel;
     BleDeviceScanner *m_scanner;
     int m_connectedCount;

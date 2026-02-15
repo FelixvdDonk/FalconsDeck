@@ -7,7 +7,7 @@ ApplicationWindow {
     width: 1280
     height: 800
     visible: true
-    title: "FalconsDeck - Battery Monitor"
+    title: "FalconsDeck"
     color: "#121212"
 
     header: ToolBar {

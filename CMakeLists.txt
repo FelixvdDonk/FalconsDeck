@@ -21,6 +21,8 @@ set(PROJECT_SOURCES
     src/ble/BleConnectionManager.cpp
     src/ble/JbdBmsConnection.h
     src/ble/JbdBmsConnection.cpp
+    src/ble/FalconsRobotConnection.h
+    src/ble/FalconsRobotConnection.cpp
     src/models/Robot.h
     src/models/Robot.cpp
     src/models/RobotListModel.h

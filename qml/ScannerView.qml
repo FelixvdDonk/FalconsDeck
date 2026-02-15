@@ -30,6 +30,13 @@ Item {
                 }
             }
 
+            Label {
+                text: "(Falcons robots always shown)"
+                font.pixelSize: 11
+                color: "#666666"
+                visible: filterCheckbox.checked
+            }
+
             Item { Layout.fillWidth: true }
 
             Label {
@@ -98,13 +105,37 @@ Item {
                             Layout.fillWidth: true
                             spacing: 2
 
-                            Label {
-                                text: modelData.name || "Unknown"
-                                font.pixelSize: 16
-                                font.bold: true
-                                color: "white"
-                                Layout.fillWidth: true
-                                elide: Text.ElideRight
+                            RowLayout {
+                                spacing: 6
+                                Label {
+                                    text: modelData.name || "Unknown"
+                                    font.pixelSize: 16
+                                    font.bold: true
+                                    color: "white"
+                                    Layout.fillWidth: true
+                                    elide: Text.ElideRight
+                                }
+
+                                // Device type badge
+                                Rectangle {
+                                    visible: {
+                                        var n = modelData.name || ""
+                                        return n.startsWith("Falcons-") || n.indexOf("SmartBMS") >= 0
+                                    }
+                                    width: dtBadgeLbl.implicitWidth + 10
+                                    height: 18
+                                    radius: 9
+                                    color: (modelData.name || "").startsWith("Falcons-") ? "#1a237e" : "#004d40"
+
+                                    Label {
+                                        id: dtBadgeLbl
+                                        anchors.centerIn: parent
+                                        text: (modelData.name || "").startsWith("Falcons-") ? "Robot" : "BMS"
+                                        font.pixelSize: 9
+                                        font.bold: true
+                                        color: "white"
+                                    }
+                                }
                             }
 
                             Label {
@@ -159,7 +190,7 @@ Item {
 
                 Label {
                     text: bleScanner.filterEnabled
-                        ? "No SmartBMS devices found"
+                        ? "No SmartBMS devices found\n(Falcons robots are always included)"
                         : "No devices found"
                     font.pixelSize: 18
                     color: "#888888"

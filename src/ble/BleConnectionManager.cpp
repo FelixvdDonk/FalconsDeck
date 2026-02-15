@@ -26,7 +26,7 @@ void BleConnectionManager::connectRobot(const QBluetoothDeviceInfo &device)
     }
 
     // Check if we've reached the maximum
-    int totalConnections = m_connections.size() + m_jbdConnections.size();
+    int totalConnections = m_connections.size() + m_jbdConnections.size() + m_falconsConnections.size();
     if (totalConnections >= MAX_ROBOTS) {
         qWarning() << "Maximum number of robots reached:" << MAX_ROBOTS;
         return;
@@ -34,13 +34,16 @@ void BleConnectionManager::connectRobot(const QBluetoothDeviceInfo &device)
 
     qDebug() << "Connecting to device:" << device.name() << address;
 
-    // Check if this is a JBD BMS device (advertises service 0xFF00)
+    // Determine device type: Falcons Robot > JBD BMS > NUS fallback
+    bool isFalconsDevice = FalconsRobotConnection::isFalconsDevice(device);
     bool isJbdDevice = false;
-    const QList<QBluetoothUuid> serviceUuids = device.serviceUuids();
-    for (const QBluetoothUuid &uuid : serviceUuids) {
-        if (uuid == JbdBmsConnection::JBD_SERVICE_UUID) {
-            isJbdDevice = true;
-            break;
+    if (!isFalconsDevice) {
+        const QList<QBluetoothUuid> serviceUuids = device.serviceUuids();
+        for (const QBluetoothUuid &uuid : serviceUuids) {
+            if (uuid == JbdBmsConnection::JBD_SERVICE_UUID) {
+                isJbdDevice = true;
+                break;
+            }
         }
     }
 
@@ -48,17 +51,36 @@ void BleConnectionManager::connectRobot(const QBluetoothDeviceInfo &device)
     Robot robot(m_nextRobotId++, device.name(), device.address());
     robot.setConnectionState(Robot::Connecting);
     robot.setRssi(device.rssi());
+    if (isFalconsDevice)
+        robot.setDeviceType(Robot::FalconsRobot);
+    else if (isJbdDevice)
+        robot.setDeviceType(Robot::SmartBMS);
     m_robotListModel->addRobot(robot);
 
     int modelIndex = m_robotListModel->count() - 1;
 
-    if (isJbdDevice) {
-        qDebug() << "Detected JBD BMS device, using JbdBmsConnection";
+    // Pause scanning during connection to avoid BlueZ HCI contention
+    if (m_scanner && m_scanner->isScanning()) {
+        m_scanner->stopScan();
+    }
 
-        // Pause scanning during connection to avoid BlueZ HCI contention
-        if (m_scanner && m_scanner->isScanning()) {
-            m_scanner->stopScan();
-        }
+    if (isFalconsDevice) {
+        qDebug() << "Detected Falcons Robot device, using FalconsRobotConnection";
+
+        FalconsRobotConnection *connection = new FalconsRobotConnection(this);
+
+        connect(connection, &FalconsRobotConnection::connectionStateChanged,
+                this, &BleConnectionManager::onFalconsConnectionStateChanged);
+        connect(connection, &FalconsRobotConnection::robotDataUpdated,
+                this, &BleConnectionManager::onFalconsRobotDataUpdated);
+        connect(connection, &FalconsRobotConnection::errorOccurred,
+                this, &BleConnectionManager::onFalconsErrorOccurred);
+
+        m_falconsConnections.append(connection);
+        connection->connectToDevice(device);
+
+    } else if (isJbdDevice) {
+        qDebug() << "Detected JBD BMS device, using JbdBmsConnection";
 
         JbdBmsConnection *connection = new JbdBmsConnection(this);
 
@@ -73,11 +95,6 @@ void BleConnectionManager::connectRobot(const QBluetoothDeviceInfo &device)
         connection->connectToDevice(device);
     } else {
         qDebug() << "Using NUS BleRobotConnection";
-
-        // Pause scanning during connection to avoid BlueZ HCI contention
-        if (m_scanner && m_scanner->isScanning()) {
-            m_scanner->stopScan();
-        }
 
         BleRobotConnection *connection = new BleRobotConnection(this);
 
@@ -122,6 +139,17 @@ void BleConnectionManager::disconnectRobot(int index)
             JbdBmsConnection *connection = m_jbdConnections[i];
             connection->disconnect();
             m_jbdConnections.removeAt(i);
+            connection->deleteLater();
+            break;
+        }
+    }
+
+    // Check if it's a Falcons connection
+    for (int i = 0; i < m_falconsConnections.size(); ++i) {
+        if (m_falconsConnections[i]->robotAddress() == address) {
+            FalconsRobotConnection *connection = m_falconsConnections[i];
+            connection->disconnect();
+            m_falconsConnections.removeAt(i);
             connection->deleteLater();
             break;
         }
@@ -364,6 +392,12 @@ void BleConnectionManager::updateConnectedCount()
             count++;
         }
     }
+    for (FalconsRobotConnection *connection : m_falconsConnections) {
+        if (connection->connectionState() == Robot::Ready ||
+            connection->connectionState() == Robot::Connected) {
+            count++;
+        }
+    }
 
     if (m_connectedCount != count) {
         m_connectedCount = count;
@@ -405,4 +439,138 @@ int BleConnectionManager::findJbdConnectionIndex(JbdBmsConnection *connection)
         }
     }
     return -1;
+}
+
+int BleConnectionManager::findFalconsConnectionIndex(FalconsRobotConnection *connection)
+{
+    for (int i = 0; i < m_falconsConnections.size(); ++i) {
+        if (m_falconsConnections[i] == connection) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+// ── Falcons Robot Connection Handlers ──
+
+void BleConnectionManager::onFalconsConnectionStateChanged()
+{
+    FalconsRobotConnection *connection = qobject_cast<FalconsRobotConnection*>(sender());
+    if (!connection) return;
+
+    int index = findConnectionByAddress(connection->robotAddress());
+    if (index < 0) return;
+
+    Robot robot = m_robotListModel->robotAt(index);
+    robot.setConnectionState(connection->connectionState());
+    robot.setRssi(connection->rssi());
+    robot.setName(connection->robotName());
+    robot.setDeviceType(Robot::FalconsRobot);
+    m_robotListModel->updateRobot(index, robot);
+
+    updateConnectedCount();
+
+    if (connection->connectionState() == Robot::Ready) {
+        emit robotConnected(index);
+    }
+
+    // Resume scanning once connection has settled
+    if (connection->connectionState() == Robot::Ready ||
+        connection->connectionState() == Robot::Error ||
+        connection->connectionState() == Robot::Disconnected) {
+        if (m_scanner && !m_scanner->isScanning()) {
+            m_scanner->startScan();
+        }
+    }
+}
+
+void BleConnectionManager::onFalconsRobotDataUpdated()
+{
+    FalconsRobotConnection *connection = qobject_cast<FalconsRobotConnection*>(sender());
+    if (!connection) return;
+
+    int index = findConnectionByAddress(connection->robotAddress());
+    if (index < 0) return;
+
+    Robot robot = m_robotListModel->robotAt(index);
+    robot.setPlayState(connection->playState());
+    robot.setWifiSsid(connection->wifiSsid());
+    robot.setWifiList(connection->wifiList());
+    robot.setBatteryVoltage(connection->batteryVoltage());
+    robot.setRobotIdentity(connection->robotIdentity());
+    robot.setName(connection->robotName());
+    robot.setLastPacketTime(QDateTime::currentDateTime());
+    m_robotListModel->updateRobot(index, robot);
+}
+
+void BleConnectionManager::onFalconsErrorOccurred(const QString &error)
+{
+    FalconsRobotConnection *connection = qobject_cast<FalconsRobotConnection*>(sender());
+    if (!connection) return;
+
+    int index = findConnectionByAddress(connection->robotAddress());
+    if (index < 0) return;
+
+    qWarning() << "Falcons Robot" << index << "error:" << error;
+    emit robotError(index, error);
+}
+
+// ── Play State / WiFi Control ──
+
+void BleConnectionManager::writePlayState(int index, int state)
+{
+    if (index < 0 || index >= m_robotListModel->count()) {
+        qWarning() << "Invalid robot index:" << index;
+        return;
+    }
+
+    Robot robot = m_robotListModel->robotAt(index);
+    QString address = robot.bluetoothAddress().toString();
+
+    for (FalconsRobotConnection *connection : m_falconsConnections) {
+        if (connection->robotAddress() == address) {
+            connection->writePlayState(state);
+            return;
+        }
+    }
+    qWarning() << "No Falcons connection found for robot at index:" << index;
+}
+
+void BleConnectionManager::writePlayStateAll(int state)
+{
+    qDebug() << "Broadcasting play state to all Falcons robots:" << state;
+    for (FalconsRobotConnection *connection : m_falconsConnections) {
+        if (connection->connectionState() == Robot::Ready) {
+            connection->writePlayState(state);
+        }
+    }
+}
+
+void BleConnectionManager::writeWifiSsid(int index, const QString &ssid)
+{
+    if (index < 0 || index >= m_robotListModel->count()) {
+        qWarning() << "Invalid robot index:" << index;
+        return;
+    }
+
+    Robot robot = m_robotListModel->robotAt(index);
+    QString address = robot.bluetoothAddress().toString();
+
+    for (FalconsRobotConnection *connection : m_falconsConnections) {
+        if (connection->robotAddress() == address) {
+            connection->writeWifiSsid(ssid);
+            return;
+        }
+    }
+    qWarning() << "No Falcons connection found for robot at index:" << index;
+}
+
+void BleConnectionManager::writeWifiSsidAll(const QString &ssid)
+{
+    qDebug() << "Broadcasting WiFi SSID to all Falcons robots:" << ssid;
+    for (FalconsRobotConnection *connection : m_falconsConnections) {
+        if (connection->connectionState() == Robot::Ready) {
+            connection->writeWifiSsid(ssid);
+        }
+    }
 }

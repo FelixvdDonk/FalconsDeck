@@ -47,6 +47,25 @@ QVariant RobotListModel::data(const QModelIndex &index, int role) const
         }
         return list;
     }
+    case DeviceTypeRole:
+        return Robot::deviceTypeToString(robot.deviceType());
+    case PlayStateRole:
+        return robot.playState();
+    case PlayStateLabelRole:
+        return Robot::playStateToString(robot.playState());
+    case WifiSsidRole:
+        return robot.wifiSsid();
+    case WifiListRole: {
+        QVariantList list;
+        for (const QString &s : robot.wifiList()) {
+            list.append(s);
+        }
+        return list;
+    }
+    case BatteryVoltageRole:
+        return robot.batteryVoltage();
+    case RobotIdentityRole:
+        return robot.robotIdentity();
     default:
         return QVariant();
     }
@@ -66,6 +85,13 @@ QHash<int, QByteArray> RobotListModel::roleNames() const
     roles[CurrentRole] = "current";
     roles[SocRole] = "soc";
     roles[CellVoltagesRole] = "cellVoltages";
+    roles[DeviceTypeRole] = "deviceType";
+    roles[PlayStateRole] = "playState";
+    roles[PlayStateLabelRole] = "playStateLabel";
+    roles[WifiSsidRole] = "wifiSsid";
+    roles[WifiListRole] = "wifiList";
+    roles[BatteryVoltageRole] = "batteryVoltage";
+    roles[RobotIdentityRole] = "robotIdentity";
     return roles;
 }
 

@@ -21,7 +21,14 @@ public:
         TotalVoltageRole,
         CurrentRole,
         SocRole,
-        CellVoltagesRole
+        CellVoltagesRole,
+        DeviceTypeRole,
+        PlayStateRole,
+        PlayStateLabelRole,
+        WifiSsidRole,
+        WifiListRole,
+        BatteryVoltageRole,
+        RobotIdentityRole
     };
 
     explicit RobotListModel(QObject *parent = nullptr);

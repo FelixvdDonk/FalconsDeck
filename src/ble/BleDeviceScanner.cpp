@@ -5,6 +5,9 @@
 // JBD BMS (Xiaoxiang/SmartBMS) uses the 0xFF00 BLE service with characteristics 0xFF01 (notify) and 0xFF02 (write)
 const QBluetoothUuid BleDeviceScanner::JBD_BMS_SERVICE_UUID = QBluetoothUuid(static_cast<quint16>(0xFF00));
 
+// Falcons Robot Control service UUID
+const QBluetoothUuid BleDeviceScanner::FALCONS_SERVICE_UUID = QBluetoothUuid(QStringLiteral("FA1C0001-B5A3-F393-E0A9-E50E24DCCA9E"));
+
 BleDeviceScanner::BleDeviceScanner(QObject *parent)
     : QObject(parent)
     , m_scanning(false)
@@ -78,6 +81,19 @@ bool BleDeviceScanner::isJbdBmsDevice(const QBluetoothDeviceInfo &device) const
     return false;
 }
 
+bool BleDeviceScanner::isFalconsDevice(const QBluetoothDeviceInfo &device) const
+{
+    // Check if the device advertises the Falcons Robot Control service UUID
+    const QList<QBluetoothUuid> serviceUuids = device.serviceUuids();
+    for (const QBluetoothUuid &uuid : serviceUuids) {
+        if (uuid == FALCONS_SERVICE_UUID) {
+            return true;
+        }
+    }
+    // Also match by name pattern
+    return device.name().startsWith("Falcons-");
+}
+
 void BleDeviceScanner::onDeviceDiscovered(const QBluetoothDeviceInfo &device)
 {
     // Only process Low Energy devices
@@ -85,8 +101,8 @@ void BleDeviceScanner::onDeviceDiscovered(const QBluetoothDeviceInfo &device)
         return;
     }
 
-    // Filter for JBD BMS devices if enabled
-    if (m_filterEnabled && !isJbdBmsDevice(device)) {
+    // Filter for JBD BMS devices if enabled (but always pass Falcons robots)
+    if (m_filterEnabled && !isJbdBmsDevice(device) && !isFalconsDevice(device)) {
         return;
     }
 

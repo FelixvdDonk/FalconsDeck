@@ -18,6 +18,9 @@ public:
     // JBD (Xiaoxiang/SmartBMS) BLE service UUID (0xFF00)
     static const QBluetoothUuid JBD_BMS_SERVICE_UUID;
 
+    // Falcons Robot Control service UUID
+    static const QBluetoothUuid FALCONS_SERVICE_UUID;
+
     explicit BleDeviceScanner(QObject *parent = nullptr);
     ~BleDeviceScanner();
 
@@ -49,6 +52,7 @@ private slots:
 private:
     void updateDeviceList(const QBluetoothDeviceInfo &device);
     bool isJbdBmsDevice(const QBluetoothDeviceInfo &device) const;
+    bool isFalconsDevice(const QBluetoothDeviceInfo &device) const;
 
     QBluetoothDeviceDiscoveryAgent *m_discoveryAgent;
     QVariantList m_discoveredDevices;
